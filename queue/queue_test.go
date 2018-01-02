@@ -1,114 +1,205 @@
 package queue
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 )
 
-func TestInit(t *testing.T) {
+func newTestQueue(initial, final int) *Queue {
 	q := &Queue{}
-	t.Log("Initializing stack...")
 	q.Init()
+
+	for i := initial; i < final; i++ {
+		q.r.Push(i)
+	}
+
+	return q
+}
+
+func newTestModifiedQueue(initial, final int) *Queue {
+	q := &Queue{}
+	q.Init()
+
+	for i := initial; i < final; i++ {
+		q.s.Push(final - i + initial)
+	}
+
+	return q
+}
+
+func TestInit(t *testing.T) {
+	t.Run("Happy path", func(t *testing.T) {
+		q := &Queue{}
+		q.Init()
+
+		expected := newTestQueue(0, 0)
+		if !reflect.DeepEqual(expected, q) {
+			t.Errorf("Expected %+v, got %+v", expected, q)
+		}
+	})
 }
 
 func TestAdd(t *testing.T) {
-	q := &Queue{}
-	q.Init()
-	t.Log("Enqueueing elements...")
-	for i := 0; i < 10; i++ {
-		q.Enqueue(i)
-	}
+	t.Run("Happy path", func(t *testing.T) {
+		q := &Queue{}
+		q.Init()
+
+		for i := 0; i < 10; i++ {
+			q.Enqueue(i)
+		}
+
+		expected := newTestQueue(0, 10)
+		if !reflect.DeepEqual(expected, q) {
+			t.Errorf("Expected %+v, got %+v", expected, q)
+		}
+	})
+}
+
+func TestSize(t *testing.T) {
+	t.Run("Empty stack", func(t *testing.T) {
+		q := newTestQueue(0, 0)
+		size := q.Size()
+
+		expected := 0
+		if size != expected {
+			t.Errorf("Expected %d, got %d", expected, size)
+		}
+	})
+
+	t.Run("Non-empty stack", func(t *testing.T) {
+		q := newTestQueue(0, 10)
+		size := q.Size()
+
+		expected := 10
+		if size != expected {
+			t.Errorf("Expected %d, got %d", expected, size)
+		}
+	})
+}
+
+func TestIsEmpty(t *testing.T) {
+	t.Run("Empty stack", func(t *testing.T) {
+		q := newTestQueue(0, 0)
+		isEmpty := q.IsEmpty()
+
+		expected := true
+		if isEmpty != expected {
+			t.Errorf("Expected %t, got %t", expected, isEmpty)
+		}
+	})
+
+	t.Run("Non-empty stack", func(t *testing.T) {
+		q := newTestQueue(0, 10)
+		isEmpty := q.IsEmpty()
+
+		expected := false
+		if isEmpty != expected {
+			t.Errorf("Expected %t, got %t", expected, isEmpty)
+		}
+	})
 }
 
 func TestDequeue(t *testing.T) {
-	q := &Queue{}
-	q.Init()
-	for i := 0; i < 10; i++ {
-		q.Enqueue(i)
-	}
+	q := newTestQueue(0, 10)
 
-	t.Log("Dequeueing elements...")
-	for i := 0; i < 10; i++ {
-		v, e := q.Dequeue()
-		if v != i {
-			t.Error("Expected ", i, ", got ", v)
+	t.Run("Popping from a non-empty stack", func(t *testing.T) {
+		for i := 0; i < 10; i++ {
+			value, err := q.Dequeue()
+			if err != nil {
+				t.Errorf("No error expected, got %+v", err)
+			}
+
+			expected := i
+			if value != expected {
+				t.Errorf("Expected %+v, got %+v", expected, value)
+			}
+
+			expectedQueue := newTestModifiedQueue(i, 9)
+			if !reflect.DeepEqual(expectedQueue, q) {
+				t.Errorf("Expected %+v, got %+v", expectedQueue, q)
+			}
 		}
-		if e != nil {
-			t.Error("Expected no error, got ", e)
+	})
+
+	t.Run("Popping from an empty stack", func(t *testing.T) {
+		_, err := q.Dequeue()
+		if err == nil {
+			t.Errorf("No error expected, got %+v", err)
 		}
-	}
 
-	t.Log("Dequeueing from an empty stack...")
-	v, e := q.Dequeue()
-	if e == nil {
-		t.Error("Expected error, got ", v)
-	}
-}
-
-func TestEnqueueAndDequeue(t *testing.T) {
-	q := &Queue{}
-	q.Init()
-	t.Log("Enqueueing and dequeueing elements...")
-	for i := 0; i < 5; i++ {
-		q.Enqueue(i)
-	}
-
-	for i := 0; i < 3; i++ {
-		q.Dequeue()
-	}
-
-	for i := 0; i < 5; i++ {
-		q.Enqueue(i)
-	}
-
-	for i := 0; i < 2; i++ {
-		q.Dequeue()
-	}
-
-	for i := 0; i < 5; i++ {
-		q.Enqueue(i)
-	}
-
-	qString := q.String()
-	if qString != "[0, 1, 2, 3, 4, 0, 1, 2, 3, 4]" {
-		t.Error("Expected [0, 1, 2, 3, 4, 0, 1, 2, 3, 4], got ", qString)
-	}
+		expected := errors.New("queue - empty queue")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+	})
 }
 
 func TestPeek(t *testing.T) {
-	q := &Queue{}
-	q.Init()
-	for i := 0; i < 10; i++ {
-		q.Enqueue(i)
-	}
-	
-	t.Log("Peeking elements...")
-	v, e := q.Peek()
-	if v != 0 {
-		t.Error("Expected 9, got ", v)
-	}
-	if e != nil {
-		t.Error("Expected no error, got ", e)
-	}
-	
-	for i := 0; i < 10; i++ {
-		q.Dequeue()
-	}
+	t.Run("Peeking elements from a non-empty queue", func(t *testing.T) {
+		q := newTestQueue(0, 10)
+		value, err := q.Peek()
+		if err != nil {
+			t.Errorf("No error expected, got %+v", err)
+		}
 
-	t.Log("Peeking from an empty stack...")
-	v, e = q.Peek()
-	if e == nil {
-		t.Error("Expected error, got ", v)
-	}
+		expected := 0
+		if !reflect.DeepEqual(expected, value) {
+			t.Errorf("Expected %+v, got %+v", expected, value)
+		}
+	})
+
+	t.Run("Peeking elements from an empty queue", func(t *testing.T) {
+		q := newTestQueue(0, 0)
+		_, err := q.Peek()
+		if err == nil {
+			t.Error("Error expected")
+		}
+
+		expected := errors.New("queue - empty queue")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+	})
 }
 
 func TestString(t *testing.T) {
-	q := &Queue{}
-	q.Init()
-	for i := 0; i < 10; i++ {
-		q.Enqueue(i)
-	}
-	qString := q.String()
-	if qString != "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]" {
-		t.Error("Expected [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], got ", qString)
-	}
+	t.Run("Empty queue", func(t *testing.T) {
+		q := newTestQueue(0, 0)
+		qString := q.String()
+
+		expected := "[]"
+		if qString != expected {
+			t.Errorf("Expected %s, got %s", expected, qString)
+		}
+	})
+
+	t.Run("Non-empty queue", func(t *testing.T) {
+		q := newTestQueue(0, 10)
+		qString := q.String()
+
+		expected := "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+		if qString != expected {
+			t.Errorf("Expected %s, got %s", expected, qString)
+		}
+	})
+
+	t.Run("Non-empty queue after operations", func(t *testing.T) {
+		q := newTestQueue(0, 10)
+		q.Dequeue()
+		q.Dequeue()
+		qString := q.String()
+
+		expected := "[2, 3, 4, 5, 6, 7, 8, 9]"
+		if qString != expected {
+			t.Errorf("Expected %s, got %s", expected, qString)
+		}
+
+		q.Enqueue(10)
+		qString = q.String()
+		expected = "[2, 3, 4, 5, 6, 7, 8, 9, 10]"
+		if qString != expected {
+			t.Errorf("Expected %s, got %s", expected, qString)
+		}
+	})
 }

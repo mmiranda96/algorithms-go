@@ -1,123 +1,293 @@
 package list
 
 import (
+	"errors"
+	"reflect"
 	"testing"
 )
 
 func TestInit(t *testing.T) {
-	l := &List{}
-	t.Log("Initializing list...")
-	l.Init()
+	t.Run("Happy path", func(t *testing.T) {
+		l := &List{}
+		l.Init()
+
+		expected := &List{
+			head: nil,
+			size: 0,
+		}
+		if !reflect.DeepEqual(expected, l) {
+			t.Errorf("Expected %+v, got %+v", expected, l)
+		}
+	})
 }
 
 func TestAdd(t *testing.T) {
 	l := &List{}
 
-	l.Init()
-	for i := 0; i < 10; i++ {
-		e := l.Add(0, i)
-		if e != nil {
-			t.Error("Expected to add item at position 0, got error: ", e)
+	t.Run("Adding elements at the beginning", func(t *testing.T) {
+		l.Init()
+
+		for i := 0; i < 5; i++ {
+			err := l.Add(0, i)
+			if err != nil {
+				t.Errorf("No error expected, got %+v", err)
+			}
 		}
-	}
-	if l.String() != "[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]" {
-		t.Error("Expected list to be [9, 8, 7, 6, 5, 4, 3, 2, 1, 0], got ", l.String())
+		expected := &List{
+			head: &listNode{
+				value: 4,
+				next: &listNode{
+					value: 3,
+					next: &listNode{
+						value: 2,
+						next: &listNode{
+							value: 1,
+							next: &listNode{
+								value: 0,
+								next:  nil,
+							},
+						},
+					},
+				},
+			},
+			size: 5,
+		}
+		if !reflect.DeepEqual(expected, l) {
+			t.Errorf("Expected %+v, got %+v", expected, l)
+		}
+	})
+
+	t.Run("Adding elements at the end", func(t *testing.T) {
+		l.Init()
+
+		for i := 0; i < 5; i++ {
+			err := l.Add(i, i)
+			if err != nil {
+				t.Errorf("No error expected, got %+v", err)
+			}
+		}
+		expected := &List{
+			head: &listNode{
+				value: 0,
+				next: &listNode{
+					value: 1,
+					next: &listNode{
+						value: 2,
+						next: &listNode{
+							value: 3,
+							next: &listNode{
+								value: 4,
+								next:  nil,
+							},
+						},
+					},
+				},
+			},
+			size: 5,
+		}
+		if !reflect.DeepEqual(expected, l) {
+			t.Errorf("Expected %+v, got %+v", expected, l)
+		}
+	})
+
+	t.Run("Adding elements at negative index", func(t *testing.T) {
+		l.Init()
+
+		err := l.Add(-1, 0)
+		if err == nil {
+			t.Error("Error expected")
+		}
+
+		expected := errors.New("list - index must be between 0 and the list size")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+	})
+
+	t.Run("Adding elements at bigger-than-size index", func(t *testing.T) {
+		l.Init()
+
+		err := l.Add(1, 0)
+		if err == nil {
+			t.Error("Error expected")
+		}
+
+		expected := errors.New("list - index must be between 0 and the list size")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+	})
+}
+
+func newTestList(elements int) *List {
+	l := &List{}
+	l.Init()
+	for i := 0; i < elements; i++ {
+		l.Add(i, i)
 	}
 
-	l.Init()
-	t.Log("Adding elements at end...")
-	for i := 0; i < 10; i++ {
-		e := l.Add(i, i)
-		if e != nil {
-			t.Error("Expected to add item at position 0, got error: ", e)
-		}
-	}
-	if l.String() != "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]" {
-		t.Error("Expected list to be [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], got ", l.String())
-	}
+	return l
+}
 
-	l.Init()
-	t.Log("Adding elements at invalid index...")
-	e := l.Add(-1, -1)
-	if e == nil {
-		t.Error("Expected error")
-	}
-	e = l.Add(10, 10)
-	if e == nil {
-		t.Error("Expected error")
-	}
+func TestSize(t *testing.T) {
+	t.Run("Empty list", func(t *testing.T) {
+		l := newTestList(0)
+		size := l.Size()
+
+		expected := 0
+		if size != expected {
+			t.Errorf("Expected %d, got %d", expected, size)
+		}
+	})
+
+	t.Run("Non-empty list", func(t *testing.T) {
+		l := newTestList(10)
+		size := l.Size()
+
+		expected := 10
+		if size != expected {
+			t.Errorf("Expected %d, got %d", expected, size)
+		}
+	})
 }
 
 func TestGet(t *testing.T) {
-	l := &List{}
+	l := newTestList(10)
 
-	l.Init()
-	for i := 0; i < 10; i++ {
-		l.Add(i, i)
-	}
-	t.Log("Getting elements in valid indexes...")
-	for i := 0; i < 10; i++ {
-		v, e := l.Get(i)
-		if v != i {
-			t.Error("Expected ", i, ", got ", v)
-		}
-		if e != nil {
-			t.Error("Expected no error, got ", e)
-		}
-	}
+	t.Run("Getting elements in valid indexes", func(t *testing.T) {
+		for i := 0; i < 10; i++ {
+			value, err := l.Get(i)
+			if err != nil {
+				t.Errorf("No error expected, got %v", err)
+			}
 
-	t.Log("Getting elements in invalid indexes...")
-	v, e := l.Get(10)
-	if e == nil {
-		t.Error("Expected error, got ", v)
-	} 
-	v, e = l.Get(-1)
-	if e == nil {
-		t.Error("Expected error, got ", v)
-	}
+			expected := i
+			if value != expected {
+				t.Errorf("Expected %+v, got %+v", expected, value)
+			}
+		}
+	})
+
+	t.Run("Getting element in negative index", func(t *testing.T) {
+		_, err := l.Get(-1)
+		if err == nil {
+			t.Error("Error expected")
+		}
+
+		expected := errors.New("list - index must be between 0 and the list size")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+
+	})
+
+	t.Run("Getting element in bigger-than-size index", func(t *testing.T) {
+		_, err := l.Get(10)
+		if err == nil {
+			t.Error("Error expected")
+		}
+
+		expected := errors.New("list - index must be between 0 and the list size")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+
+	})
 }
 
 func TestDelete(t *testing.T) {
-	l := &List{}
+	l := newTestList(10)
 
-	l.Init()
-	for i := 0; i < 10; i++ {
-		l.Add(i, i)
-	}
-	t.Log("Deleting elements in valid indexes...")
-	for i := 0; i < 5; i++ {
-		v, e := l.Delete(9 - i)
-		if v != 9 - i {
-			t.Error("Expected ", i, ", got ", v)
-		}
-		if e != nil {
-			t.Error("Expected no error, got ", e)
-		}
-	}
-	if l.String() != "[0, 1, 2, 3, 4]" {
-		t.Error("Expected list to be [0, 1, 2, 3, 4], got ", l.String())
-	}
+	t.Run("Deleting elements in valid indexes", func(t *testing.T) {
+		for i := 0; i < 5; i++ {
+			value, err := l.Delete(9 - i)
+			if err != nil {
+				t.Errorf("Expected no error, got %+v", err)
+			}
 
-	t.Log("Deleting elements in invalid indexes...")
-	v, e := l.Delete(10)
-	if e == nil {
-		t.Error("Expected error, got ", v)
-	} 
-	v, e = l.Delete(-1)
-	if e == nil {
-		t.Error("Expected error, got ", v)
-	}
-	
+			expected := 9 - i
+			if expected != value {
+				t.Errorf("Expected %+v, got %+v", expected, value)
+			}
+		}
+
+		expected := newTestList(5)
+		if !reflect.DeepEqual(expected, l) {
+			t.Errorf("Expected %+v, got %+v", expected, l)
+		}
+	})
+
+	t.Run("Deleting elements in initial index", func(t *testing.T) {
+		for i := 0; i < 3; i++ {
+			value, err := l.Delete(0)
+			if err != nil {
+				t.Errorf("Expected no error, got %+v", err)
+			}
+
+			expected := i
+			if expected != value {
+				t.Errorf("Expected %+v, got %+v", expected, value)
+			}
+		}
+
+		expected := &List{
+			head: &listNode{
+				value: 3,
+				next: &listNode{
+					value: 4,
+					next:  nil,
+				},
+			},
+			size: 2,
+		}
+		if !reflect.DeepEqual(expected, l) {
+			t.Errorf("Expected %+v, got %+v", expected, l)
+		}
+	})
+
+	t.Run("Deleting elements in negative index", func(t *testing.T) {
+		_, err := l.Delete(-1)
+		if err == nil {
+			t.Error("Error expected")
+		}
+
+		expected := errors.New("list - index must be between 0 and the list size")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+	})
+
+	t.Run("Deleting elements in bigger-than-size index", func(t *testing.T) {
+		_, err := l.Delete(10)
+		if err == nil {
+			t.Error("Error expected")
+		}
+
+		expected := errors.New("list - index must be between 0 and the list size")
+		if !reflect.DeepEqual(expected, err) {
+			t.Errorf("Expected %+v, got %+v", expected, err)
+		}
+	})
 }
 
 func TestString(t *testing.T) {
-	l := &List{}
-	l.Init()
-	for i := 0; i < 10; i++ {
-		l.Add(i, i)
-	}
-	lString := l.String()
-	if lString != "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]" {
-		t.Error("Expected [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], got ", lString)
-	}
+	t.Run("Empty list", func(t *testing.T) {
+		l := newTestList(0)
+		lString := l.String()
+
+		expected := "[]"
+		if lString != expected {
+			t.Errorf("Expected %s, got %s", expected, lString)
+		}
+	})
+
+	t.Run("Non-empty list", func(t *testing.T) {
+		l := newTestList(10)
+		lString := l.String()
+
+		expected := "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+		if lString != expected {
+			t.Errorf("Expected %s, got %s", expected, lString)
+		}
+	})
 }

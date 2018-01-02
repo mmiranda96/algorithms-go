@@ -5,7 +5,6 @@ package queue
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/mmiranda96/algorithms-go/stack"
 )
@@ -51,7 +50,13 @@ func (q *Queue) Dequeue() (interface{}, error) {
 		v, _ := q.r.Pop()
 		q.s.Push(v)
 	}
-	return q.s.Pop()
+
+	value, err := q.s.Pop()
+	if err != nil {
+		return nil, errors.New("queue - empty queue")
+	}
+
+	return value, nil
 }
 
 // Peek returns the front element in the queue
@@ -73,37 +78,20 @@ func (q *Queue) String() string {
 	}
 	if q.r.IsEmpty() {
 		return q.s.String()
-	} else if q.s.IsEmpty() {
-		t := &stack.Stack{}
-		t.Init()
-		for !q.r.IsEmpty() {
-			v, _ := q.r.Pop()
-			t.Push(v)
-		}
-
-		res := "["
-		for !t.IsEmpty() {
-			v, _ := t.Pop()
-			q.r.Push(v)
-			res += fmt.Sprintf("%v, ", v)
-		}
-		return res[0:len(res)-2] + "]"
-	} else {
-		t := &stack.Stack{}
-		t.Init()
-		for !q.r.IsEmpty() {
-			v, _ := q.r.Pop()
-			t.Push(v)
-		}
-
-		res := "["
-		for !t.IsEmpty() {
-			v, _ := t.Pop()
-			q.r.Push(v)
-			res += fmt.Sprintf("%v, ", v)
-		}
-
-		sString := q.s.String()
-		return res + sString[1:len(sString)-1]
 	}
+
+	t := &stack.Stack{}
+	t.Init()
+	for !q.r.IsEmpty() {
+		v, _ := q.r.Pop()
+		t.Push(v)
+	}
+
+	res := t.String()
+	for !t.IsEmpty() {
+		v, _ := t.Pop()
+		q.r.Push(v)
+	}
+
+	return res
 }

@@ -33,7 +33,7 @@ func (l *List) Size() int {
 // Add adds an item to the list in given index
 func (l *List) Add(index int, value interface{}) error {
 	if index < 0 || index > l.size {
-		return errors.New("list: index must be between 0 and the list size")
+		return errors.New("list - index must be between 0 and the list size")
 	} else if index == 0 {
 		node := &listNode{value, l.head}
 		l.head = node
@@ -53,7 +53,7 @@ func (l *List) Add(index int, value interface{}) error {
 // Get returns the item in given index
 func (l *List) Get(index int) (interface{}, error) {
 	if index < 0 || index >= l.size {
-		return nil, errors.New("list: index must be between 0 and the list size")
+		return nil, errors.New("list - index must be between 0 and the list size")
 	}
 
 	t := l.head
@@ -66,7 +66,7 @@ func (l *List) Get(index int) (interface{}, error) {
 // Delete removes and returns the item in given index
 func (l *List) Delete(index int) (interface{}, error) {
 	if index < 0 || index >= l.size {
-		return nil, errors.New("list: index must be between 0 and the list size")
+		return nil, errors.New("list - index must be between 0 and the list size")
 	}
 	if index == 0 {
 		v := l.head.value
