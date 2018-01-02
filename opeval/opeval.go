@@ -44,7 +44,7 @@ func isPrecedent(x string, y string) bool {
 	return true
 }
 
-func toPostfix(eq string) *queue.Queue {
+func toPostfix(eq string) (*queue.Queue, error) {
 	q := &queue.Queue{}
 	s := &stack.Stack{}
 
@@ -77,6 +77,8 @@ func toPostfix(eq string) *queue.Queue {
 			}
 		} else if isNumber(t) || t == "." {
 			v += t
+		} else if t != " " {
+			return nil, fmt.Errorf("invalid character '%s'", t)
 		}
 	}
 	if v != "" {
@@ -86,7 +88,7 @@ func toPostfix(eq string) *queue.Queue {
 		op, _ := s.Pop()
 		q.Enqueue(op)
 	}
-	return q
+	return q, nil
 }
 
 func eval(a float64, b float64, op string) (float64, error) {
@@ -107,31 +109,35 @@ func toValue(x interface{}) (float64, error) {
 	return strconv.ParseFloat(fmt.Sprintf("%v", x), 64)
 }
 
-// Evaluate receives an infix operation and returns its evaluation.
-// It ignores non-operand/operators (anything else than numbers, dots,
-// parenthesis or basic operators). Valid operators are '+', '-', '*' and '/'.
+// Evaluate receives an infix operation and returns its evaluation. Valid operators are '+', '-', '*' and '/', as well as parenthesis.
 func Evaluate(eq string) (float64, error) {
 	if !checkParenthesis(eq, 0) {
 		return 0.0, errors.New("opeval - invalid parenthesis configuration")
 	}
 
-	q := toPostfix(eq)
+	q, err := toPostfix(eq)
+	if err != nil {
+		return 0.0, fmt.Errorf("opeval - %s", err.Error())
+	}
 	s := &stack.Stack{}
 	s.Init()
 	for !q.IsEmpty() {
 		x, _ := q.Dequeue()
-		op := fmt.Sprintf("%v", x)
+		op := fmt.Sprintf("%s", x)
 		if isOperator(op) {
-			b, err := s.Pop()
-			if err != nil {
-				return 0.0, errors.New("opeval - invalid operation")
-			}
+			b, _ := s.Pop()
 			a, err := s.Pop()
 			if err != nil {
-				return 0.0, errors.New("opeval - invalid operation")
+				return 0.0, errors.New("opeval - invalid expression")
 			}
-			bnum, _ := toValue(b)
-			anum, _ := toValue(a)
+			bnum, err := toValue(b)
+			if err != nil {
+				return 0.0, errors.New("opeval - invalid expression")
+			}
+			anum, err := toValue(a)
+			if err != nil {
+				return 0.0, errors.New("opeval - invalid expression")
+			}
 			t, err := eval(anum, bnum, op)
 			if err != nil {
 				return 0.0, errors.New("opeval - division by 0")
@@ -141,9 +147,8 @@ func Evaluate(eq string) (float64, error) {
 			s.Push(op)
 		}
 	}
-	if s.IsEmpty() {
-		return 0.0, errors.New("opeval - invalid operation")
-	}
 	res, _ := s.Pop()
-	return toValue(res)
+	value, _ := toValue(res)
+
+	return value, nil
 }
