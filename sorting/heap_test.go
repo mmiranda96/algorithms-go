@@ -63,7 +63,25 @@ func TestSwap(t *testing.T) {
 }
 
 func TestHeapify(t *testing.T) {
+	h := heap([]int{5, 4, 1, 2, 3, 0})
 
+	t.Run("No change", func(t *testing.T) {
+		h.heapify(3)
+
+		expected := heap([]int{5, 4, 1, 2, 3, 0})
+		if !reflect.DeepEqual(expected, h) {
+			t.Errorf("Expected %+v, got %+v", expected, h)
+		}
+	})
+
+	t.Run("Change", func(t *testing.T) {
+		h.heapify(2)
+
+		expected := heap([]int{5, 4, 3, 2, 1, 0})
+		if !reflect.DeepEqual(expected, h) {
+			t.Errorf("Expected %+v, got %+v", expected, h)
+		}
+	})
 }
 
 func TestBuildHeap(t *testing.T) {
