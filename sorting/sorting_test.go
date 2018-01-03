@@ -2,10 +2,11 @@ package sorting
 
 import (
 	"math/rand"
-	gosort "sort"
 	"testing"
 	"time"
 )
+
+type sortFunc func([]int) []int
 
 var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -19,16 +20,26 @@ func buildRandomizedList(elements int) []int {
 	return list
 }
 
-func BenchmarkHeapSort(b *testing.B) {
-	b.Run("Randomized int list", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			list := buildRandomizedList(i)
-			list = HeapSort(list)
+func benchmarkSort(i int, f sortFunc, b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		b.StopTimer()
+		list := buildRandomizedList(i)
 
-			isSorted := gosort.IntsAreSorted(list)
-			if !isSorted {
-				b.Errorf("Failed sorting with %d elements", i)
-			}
-		}
-	})
+		b.StartTimer()
+		list = f(list)
+	}
 }
+
+// HeapSort
+func BenchmarkHeapSort10(b *testing.B)     { benchmarkSort(10, HeapSort, b) }
+func BenchmarkHeapSort100(b *testing.B)    { benchmarkSort(100, HeapSort, b) }
+func BenchmarkHeapSort1000(b *testing.B)   { benchmarkSort(1000, HeapSort, b) }
+func BenchmarkHeapSort10000(b *testing.B)  { benchmarkSort(10000, HeapSort, b) }
+func BenchmarkHeapSort100000(b *testing.B) { benchmarkSort(100000, HeapSort, b) }
+
+// MergeSort
+func BenchmarkMergeSort10(b *testing.B)     { benchmarkSort(10, MergeSort, b) }
+func BenchmarkMergeSort100(b *testing.B)    { benchmarkSort(100, MergeSort, b) }
+func BenchmarkMergeSort1000(b *testing.B)   { benchmarkSort(1000, MergeSort, b) }
+func BenchmarkMergeSort10000(b *testing.B)  { benchmarkSort(10000, MergeSort, b) }
+func BenchmarkMergeSort100000(b *testing.B) { benchmarkSort(100000, MergeSort, b) }
