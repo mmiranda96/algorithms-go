@@ -2,6 +2,7 @@ package sorting
 
 import (
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 )
@@ -27,6 +28,10 @@ func benchmarkSort(i int, f sortFunc, b *testing.B) {
 
 		b.StartTimer()
 		list = f(list)
+		b.StopTimer()
+		if !sort.IntsAreSorted(list) {
+			b.Error("List not sorted")
+		}
 	}
 }
 
@@ -43,3 +48,17 @@ func BenchmarkMergeSort100(b *testing.B)    { benchmarkSort(100, MergeSort, b) }
 func BenchmarkMergeSort1000(b *testing.B)   { benchmarkSort(1000, MergeSort, b) }
 func BenchmarkMergeSort10000(b *testing.B)  { benchmarkSort(10000, MergeSort, b) }
 func BenchmarkMergeSort100000(b *testing.B) { benchmarkSort(100000, MergeSort, b) }
+
+// QuickSort
+func BenchmarkQuickSort10(b *testing.B)     { benchmarkSort(10, QuickSort, b) }
+func BenchmarkQuickSort100(b *testing.B)    { benchmarkSort(100, QuickSort, b) }
+func BenchmarkQuickSort1000(b *testing.B)   { benchmarkSort(1000, QuickSort, b) }
+func BenchmarkQuickSort10000(b *testing.B)  { benchmarkSort(10000, QuickSort, b) }
+func BenchmarkQuickSort100000(b *testing.B) { benchmarkSort(100000, QuickSort, b) }
+
+// QuickSortRand
+func BenchmarkQuickSortRand10(b *testing.B)     { benchmarkSort(10, QuickSortRand, b) }
+func BenchmarkQuickSortRand100(b *testing.B)    { benchmarkSort(100, QuickSortRand, b) }
+func BenchmarkQuickSortRand1000(b *testing.B)   { benchmarkSort(1000, QuickSortRand, b) }
+func BenchmarkQuickSortRand10000(b *testing.B)  { benchmarkSort(10000, QuickSortRand, b) }
+func BenchmarkQuickSortRand100000(b *testing.B) { benchmarkSort(100000, QuickSortRand, b) }
