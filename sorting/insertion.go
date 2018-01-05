@@ -1,5 +1,6 @@
 package sorting
 
+// InsertionSort sorts an integer slice using the naive insertion sort algoritm
 func InsertionSort(list []int) []int {
 	result := make([]int, len(list))
 	copy(result, list)
