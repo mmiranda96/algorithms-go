@@ -11,11 +11,11 @@ type sortFunc func([]int) []int
 
 var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-func buildRandomizedList(elements int) []int {
+func buildRandomizedList(elements, max int) []int {
 	list := make([]int, elements, elements)
 
 	for i := 0; i < elements; i++ {
-		list[i] = r.Int()
+		list[i] = r.Intn(max)
 	}
 
 	return list
@@ -24,7 +24,7 @@ func buildRandomizedList(elements int) []int {
 func benchmarkSort(i int, f sortFunc, b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		b.StopTimer()
-		list := buildRandomizedList(i)
+		list := buildRandomizedList(i, 10000)
 
 		b.StartTimer()
 		list = f(list)
@@ -76,3 +76,24 @@ func BenchmarkInsertionSort100(b *testing.B)    { benchmarkSort(100, InsertionSo
 func BenchmarkInsertionSort1000(b *testing.B)   { benchmarkSort(1000, InsertionSort, b) }
 func BenchmarkInsertionSort10000(b *testing.B)  { benchmarkSort(10000, InsertionSort, b) }
 func BenchmarkInsertionSort100000(b *testing.B) { benchmarkSort(100000, InsertionSort, b) }
+
+// RadixSort
+func BenchmarkRadixSort10(b *testing.B)     { benchmarkSort(10, RadixSort, b) }
+func BenchmarkRadixSort100(b *testing.B)    { benchmarkSort(100, RadixSort, b) }
+func BenchmarkRadixSort1000(b *testing.B)   { benchmarkSort(1000, RadixSort, b) }
+func BenchmarkRadixSort10000(b *testing.B)  { benchmarkSort(10000, RadixSort, b) }
+func BenchmarkRadixSort100000(b *testing.B) { benchmarkSort(100000, RadixSort, b) }
+
+// BucketSort
+func BenchmarkBucketSort10(b *testing.B)     { benchmarkSort(10, BucketSort, b) }
+func BenchmarkBucketSort100(b *testing.B)    { benchmarkSort(100, BucketSort, b) }
+func BenchmarkBucketSort1000(b *testing.B)   { benchmarkSort(1000, BucketSort, b) }
+func BenchmarkBucketSort10000(b *testing.B)  { benchmarkSort(10000, BucketSort, b) }
+func BenchmarkBucketSort100000(b *testing.B) { benchmarkSort(100000, BucketSort, b) }
+
+// CountingSort
+func BenchmarkCountingSort10(b *testing.B)     { benchmarkSort(10, CountingSort, b) }
+func BenchmarkCountingSort100(b *testing.B)    { benchmarkSort(100, CountingSort, b) }
+func BenchmarkCountingSort1000(b *testing.B)   { benchmarkSort(1000, CountingSort, b) }
+func BenchmarkCountingSort10000(b *testing.B)  { benchmarkSort(10000, CountingSort, b) }
+func BenchmarkCountingSort100000(b *testing.B) { benchmarkSort(100000, CountingSort, b) }
